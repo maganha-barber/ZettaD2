@@ -1,31 +1,37 @@
-# ZettaD2
+# ZettaD2 — Desafio II (To‑Do List API)
 
-Desafio II — **To-Do List API** com **Next.js 14 (App Router)** + **Supabase (PostgreSQL + Auth + RLS)**.
+API REST para gerenciamento de tarefas com **autenticação**, **CRUD** e **isolamento de dados por usuário** via **RLS** no Supabase.
 
-## Stack
+## Tecnologias
 
-- **Next.js 14+** (Route Handlers em `app/api/...`)
+- **Next.js 14+** (App Router + Route Handlers em `app/api/...`)
 - **TypeScript** (strict)
-- **Supabase** (Auth + PostgreSQL)
-- **Zod** (validação)
-- **Dockerfile** (build de produção desejável)
+- **Supabase** (PostgreSQL + Auth + JWT)
+- **Zod** (validação de entrada)
+- **Dockerfile** (build de produção)
 
-## Pré-requisitos
+## Requisitos atendidos
 
-- Node.js 20+
-- Uma instância no Supabase
+- **Autenticação**: cadastro e login via Supabase Auth (JWT).
+- **CRUD de tarefas**: criar, listar, atualizar e deletar.
+- **Filtros**: listagem por status (`pending` | `done`).
+- **Segurança**: acesso restrito ao dono do dado via **Row Level Security (RLS)** no banco.
 
-## Configuração do Supabase (SQL + RLS)
+## Modelagem e RLS (Supabase)
 
-1. No Supabase, abra o **SQL Editor** e rode:
+1. No Supabase, abra o **SQL Editor** e execute:
    - `supabase/sql/001_tasks_rls.sql`
-2. Confirme que a tabela `public.tasks` está com **RLS habilitado** e as policies criadas.
+2. O script cria:
+   - Tabela `public.tasks`
+   - Enum `task_status` (`pending`, `done`)
+   - Índices para performance
+   - Policies RLS garantindo `auth.uid() = user_id`
 
 ## Variáveis de ambiente
 
-Crie `.env.local` na raiz do projeto conforme `docs/ENVIRONMENT.md`.
+Crie `.env.local` conforme `docs/ENVIRONMENT.md`.
 
-## Rodar localmente
+## Como rodar localmente
 
 ```bash
 npm install
@@ -38,11 +44,7 @@ Healthcheck:
 curl -s http://localhost:3000/api/health
 ```
 
-## API (Tasks)
-
-> A API exige usuário autenticado no Supabase. A segurança de “somente meus dados” é garantida **no banco** via RLS.
-
-## Auth (Supabase)
+## Autenticação (Auth)
 
 ### Signup
 
@@ -53,7 +55,7 @@ curl -s -X POST \
   "http://localhost:3000/api/auth/signup"
 ```
 
-### Login (pegar JWT)
+### Login (obter `access_token`)
 
 ```bash
 curl -s -X POST \
@@ -62,21 +64,25 @@ curl -s -X POST \
   "http://localhost:3000/api/auth/login"
 ```
 
-O `access_token` vem em `data.session.access_token`.
+O token vem em `data.session.access_token`.
+
+## Tarefas (Tasks)
+
+> Para todas as rotas abaixo, envie `Authorization: Bearer <access_token>`.
 
 ### Listar tarefas
 
 ```bash
 curl -s \
-  -H "Authorization: Bearer <SUPABASE_JWT>" \
+  -H "Authorization: Bearer <access_token>" \
   "http://localhost:3000/api/tasks"
 ```
 
-Filtro por status:
+#### Filtrar por status
 
 ```bash
 curl -s \
-  -H "Authorization: Bearer <SUPABASE_JWT>" \
+  -H "Authorization: Bearer <access_token>" \
   "http://localhost:3000/api/tasks?status=pending"
 ```
 
@@ -85,7 +91,7 @@ curl -s \
 ```bash
 curl -s -X POST \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer <SUPABASE_JWT>" \
+  -H "Authorization: Bearer <access_token>" \
   -d '{"title":"Estudar RLS","description":"Revisar policies","status":"pending"}' \
   "http://localhost:3000/api/tasks"
 ```
@@ -95,7 +101,7 @@ curl -s -X POST \
 ```bash
 curl -s -X PUT \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer <SUPABASE_JWT>" \
+  -H "Authorization: Bearer <access_token>" \
   -d '{"status":"done"}' \
   "http://localhost:3000/api/tasks/<TASK_ID>"
 ```
@@ -104,7 +110,7 @@ curl -s -X PUT \
 
 ```bash
 curl -s -X DELETE \
-  -H "Authorization: Bearer <SUPABASE_JWT>" \
+  -H "Authorization: Bearer <access_token>" \
   "http://localhost:3000/api/tasks/<TASK_ID>"
 ```
 
