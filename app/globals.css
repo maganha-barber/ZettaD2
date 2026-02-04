@@ -1,0 +1,10 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Ajustes globais mínimos (Estilo Ragi: limpo e scannable) */
+html,
+body {
+  height: 100%;
+}
+
