@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getAuthenticatedUserOrNull } from "@/lib/supabase/server";
 import { updateTaskBodySchema } from "@/lib/validators/task.validators";
 import { TasksService } from "@/services/tasks.service";
 
@@ -15,14 +15,8 @@ export async function PUT(request: Request, context: RouteContext) {
       return NextResponse.json({ error: "ID ausente." }, { status: 400 });
     }
 
-    const supabase = createSupabaseServerClient();
-
-    const {
-      data: { user },
-      error: authError
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
+    const { supabase, user } = await getAuthenticatedUserOrNull(request);
+    if (!user) {
       return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
     }
 
@@ -59,21 +53,15 @@ export async function PUT(request: Request, context: RouteContext) {
   }
 }
 
-export async function DELETE(_request: Request, context: RouteContext) {
+export async function DELETE(request: Request, context: RouteContext) {
   try {
     const taskId = context.params.id;
     if (!taskId) {
       return NextResponse.json({ error: "ID ausente." }, { status: 400 });
     }
 
-    const supabase = createSupabaseServerClient();
-
-    const {
-      data: { user },
-      error: authError
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
+    const { supabase, user } = await getAuthenticatedUserOrNull(request);
+    if (!user) {
       return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
     }
 

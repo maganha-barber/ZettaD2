@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getAuthenticatedUserOrNull } from "@/lib/supabase/server";
 import {
   createTaskBodySchema,
   listTasksQuerySchema
@@ -9,14 +9,8 @@ import { TasksService } from "@/services/tasks.service";
 
 export async function GET(request: Request) {
   try {
-    const supabase = createSupabaseServerClient();
-
-    const {
-      data: { user },
-      error: authError
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
+    const { supabase, user } = await getAuthenticatedUserOrNull(request);
+    if (!user) {
       return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
     }
 
@@ -49,14 +43,8 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const supabase = createSupabaseServerClient();
-
-    const {
-      data: { user },
-      error: authError
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
+    const { supabase, user } = await getAuthenticatedUserOrNull(request);
+    if (!user) {
       return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
     }
 

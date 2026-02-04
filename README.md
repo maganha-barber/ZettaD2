@@ -42,6 +42,28 @@ curl -s http://localhost:3000/api/health
 
 > A API exige usuário autenticado no Supabase. A segurança de “somente meus dados” é garantida **no banco** via RLS.
 
+## Auth (Supabase)
+
+### Signup
+
+```bash
+curl -s -X POST \
+  -H "Content-Type: application/json" \
+  -d '{"email":"voce@exemplo.com","password":"UmaSenhaForte123"}' \
+  "http://localhost:3000/api/auth/signup"
+```
+
+### Login (pegar JWT)
+
+```bash
+curl -s -X POST \
+  -H "Content-Type: application/json" \
+  -d '{"email":"voce@exemplo.com","password":"UmaSenhaForte123"}' \
+  "http://localhost:3000/api/auth/login"
+```
+
+O `access_token` vem em `data.session.access_token`.
+
 ### Listar tarefas
 
 ```bash

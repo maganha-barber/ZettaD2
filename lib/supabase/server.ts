@@ -2,7 +2,16 @@ import { createServerClient } from "@supabase/ssr";
 import type { SetAllCookies } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
-export function createSupabaseServerClient() {
+function getBearerTokenFromRequest(request: Request): string | null {
+  const header =
+    request.headers.get("authorization") ?? request.headers.get("Authorization");
+  if (!header) return null;
+
+  const match = header.match(/^Bearer\s+(.+)$/i);
+  return match?.[1]?.trim() ?? null;
+}
+
+export function createSupabaseServerClient(params?: { accessToken?: string }) {
   const cookieStore = cookies();
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -15,6 +24,13 @@ export function createSupabaseServerClient() {
   }
 
   return createServerClient(supabaseUrl, supabaseAnonKey, {
+    global: params?.accessToken
+      ? {
+          headers: {
+            Authorization: `Bearer ${params.accessToken}`
+          }
+        }
+      : undefined,
     cookies: {
       getAll() {
         return cookieStore.getAll();
@@ -32,3 +48,14 @@ export function createSupabaseServerClient() {
   });
 }
 
+export async function getAuthenticatedUserOrNull(request: Request) {
+  const accessToken = getBearerTokenFromRequest(request);
+  const supabase = createSupabaseServerClient({ accessToken: accessToken ?? undefined });
+
+  const { data, error } = accessToken
+    ? await supabase.auth.getUser(accessToken)
+    : await supabase.auth.getUser();
+
+  if (error || !data.user) return { supabase, user: null };
+  return { supabase, user: data.user };
+}
